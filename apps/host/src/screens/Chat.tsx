@@ -384,11 +384,11 @@ export function ChatScreen() {
         if (!text && !queuedPhotos.length)
             return;
         if (streaming) {
-            // Typed while a goal runs: it waits in the queue, shown under the conversation. With no goal running there is nothing to queue behind.
+            // Typed while the assistant works: the host puts it into the running turn, so the model reads it on its next step (a goal takes it between steps). With no turn running there is nothing to add to.
             if (!text || !session)
                 return;
             updateDraft('');
-            void queueMessage(session.id, text).then(ok => { if (!ok) { updateDraft(text); pushToast('info', tr('The assistant is still answering'), tr('Send your message when it has finished.')); } }, e => { updateDraft(text); pushToast('error', tr('The message was not queued'), plainFailureText(e instanceof Error ? e.message : String(e)).message); });
+            void queueMessage(session.id, text).then(ok => { if (!ok) { updateDraft(text); pushToast('info', tr('The assistant has just finished'), tr('Your message did not reach the answer. Send it again.')); } }, e => { updateDraft(text); pushToast('error', tr('The message was not queued'), plainFailureText(e instanceof Error ? e.message : String(e)).message); });
             return;
         }
         const timeSkip = timeSkipPrompt(text);

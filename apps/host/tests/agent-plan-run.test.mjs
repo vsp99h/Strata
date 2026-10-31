@@ -89,7 +89,7 @@ test('a goal with numbered points runs point by point and reports each one', { s
 
 test('a message typed while a goal without points runs is queued, can be taken back, and is handed back when the goal is stopped', { skip }, async (t) => {
   const r = await rig(t);
-  assert.throws(() => r.bridge.queueMessage({ chatId: 'q1', text: 'hello' }), /No goal is running/);
+  assert.throws(() => r.bridge.queueMessage({ chatId: 'q1', text: 'hello' }), /Nothing is running/);
   const out = [];
   const run = r.bridge.runTurn({ ...r.base('q1', f => out.push(f)), goal: { action: 'create', objective: 'keep going', maxRounds: 50 } });
   // the goal turn may take a while to start on a busy machine: queue as soon as it runs

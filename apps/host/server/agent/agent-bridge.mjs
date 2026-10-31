@@ -493,8 +493,9 @@ export function createAgentBridge({ dataDir, componentsDir = null, bundledDir = 
       const engine = !failure && route.kind === 'local' ? await engineSpeedOf(route, projector) : null;
       const frames = failure ? [{ type: 'error', message: plainAgentFailure(failure), details: failure, code: 'AGENT_STOPPED' }] : projector.finish({ model: route.name, contextMax: route.contextWindow, engine });
       for (const f of frames.slice(0, -1)) emit(f);
-      // Messages typed while the goal ran and not delivered between steps go back to the page now, to be sent as ordinary messages.
-      if (turn.goalRun && attached) {
+      // Comments still waiting when this turn ends go back to the page, to be sent as ordinary messages: a goal
+      // that ran out of steps leaves them, and so does an ordinary turn whose steering the Harness would not take.
+      if (attached) {
         const left = queueView(chatId);
         if (left.length) { queues.delete(chatId); onQueue(chatId, []); emit({ type: 'queued-release', messages: left.map(({ id, text }) => ({ id, text })) }); }
       }
@@ -1096,22 +1097,51 @@ export function createAgentBridge({ dataDir, componentsDir = null, bundledDir = 
     delete sessionMap[chatId]; persist();
   }
 
-  // -- messages typed while a goal runs ----------------------------------------------------------------------
+  // -- comments typed while the assistant is working ---------------------------------------------------------
 
-  /** Queue a message for the running goal. It is delivered between steps, or handed back to the page when the goal ends or pauses. */
+  /**
+   * Take a comment the person typed while the assistant is working.
+   * A goal keeps the rhythm it had: the comment waits for a step boundary, or goes back to the page when the
+   * goal ends. An ordinary turn is steered at once — the Harness puts the text in its next-step inbox, so the
+   * model reads it on the next step of the same turn instead of after the answer is finished.
+   */
   function queueMessage({ chatId, text }) {
     const turn = chats.get(chatId)?.turn;
-    if (!turn || !turn.goalRun || turn.stopping || turn.finished) throw new AgentUnavailable('No goal is running in this chat, so there is nothing to queue behind. Send the message as usual.', 'queue-idle');
+    if (!turn || turn.stopping || turn.finished) throw new AgentUnavailable('Nothing is running in this chat, so there is nothing to add to. Send the message as usual.', 'queue-idle');
     const clean = String(text ?? '').trim().slice(0, 8000);
     if (!clean) throw new AgentUnavailable('Type a few words to queue.', 'queue-empty');
     const list = queues.get(chatId) ?? [];
     if (list.length >= 20) throw new AgentUnavailable('Twenty messages are already waiting. Wait for some to be delivered.', 'queue-full');
-    const item = { id: randomUUID(), text: clean, at: new Date().toISOString(), deliverAt: turn.plan ? 'step' : 'end' };
+    const item = { id: randomUUID(), text: clean, at: new Date().toISOString(), deliverAt: turn.goalRun && !turn.plan ? 'end' : 'step' };
     list.push(item); queues.set(chatId, list);
     const message = { id: item.id, text: item.text, at: item.at, deliverAt: item.deliverAt };
     onQueue(chatId, queueView(chatId));
     turn.announceQueue?.({ type: 'queued-message', state: 'queued', message, queue: queueView(chatId) });
+    if (!turn.goalRun) void steerNow(chatId, item);
     return { message, queue: queueView(chatId) };
+  }
+
+  /**
+   * Hand one comment to the turn that is running now. The Harness answers as soon as it has taken the message,
+   * which is before its next step, not before the answer. Only an accepted comment is announced as delivered:
+   * one the Harness will not take stays on the waiting list, still shown as waiting, and the end of the turn
+   * hands it back to the page (see finishTurn).
+   */
+  async function steerNow(chatId, item) {
+    const sessionId = sessionMap[chatId]?.sessionId;
+    const turn = chats.get(chatId)?.turn;
+    if (!turn || !rt || !sessionId) return;
+    try {
+      await rt.gw.rpc('session/prompt', { request: { requestId: `steer-${randomUUID()}`, sessionId, mode: 'steer', content: [{ type: 'text', text: item.text }] } });
+    } catch { return; }
+    // The turn may have ended while the Harness was deciding. Then it is not ours to announce anything: finishTurn
+    // has already handed whatever was still waiting back to the page, and saying 'delivered' now would repeat it.
+    const live = chats.get(chatId)?.turn;
+    if (!live || live !== turn || live.finished || live.stopping) return;
+    const waiting = (queues.get(chatId) ?? []).filter(m => m.id !== item.id);
+    if (waiting.length) queues.set(chatId, waiting); else queues.delete(chatId);
+    onQueue(chatId, queueView(chatId));
+    live.announceQueue?.({ type: 'queued-message', state: 'delivered', message: { id: item.id, text: item.text, at: item.at, deliverAt: 'step' }, queue: queueView(chatId) });
   }
 
   /** Take a queued message back (the x on it). A message already being delivered cannot be taken back. */

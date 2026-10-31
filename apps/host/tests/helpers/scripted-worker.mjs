@@ -11,6 +11,7 @@
  *
  *   SCRIPT:hello                    reasoning then a short text reply
  *   SCRIPT:slow [n]                 n (default 400) text chunks, 40 ms apart: a window for Stop
+ *   SCRIPT:steps <n> <file>         n shell calls, one per step, then a short answer: a turn with real step boundaries
  *   SCRIPT:tool <file> <text>       one shell call that appends <text> to <file>; it asks the sandbox for
  *                                   wider access, so the approval gate is exercised
  *   SCRIPT:plain <file> <text>      the same call without the escalation (no approval needed)
@@ -172,6 +173,15 @@ export async function startScriptedWorker({ port = 0, chunkDelayMs = 40, model =
       let cfg = {};
       try { cfg = JSON.parse((directive[2] ?? '').trim()); } catch { /* a test bug */ }
       return say([String(cfg.say ?? 'Done.')]);
+    }
+    // A turn with real step boundaries: one shell call per step, until n of them ran, then a short answer.
+    // It must be read before the generic "a tool result came back" reply below, or the turn would end at its first step.
+    if (directive?.[1] === 'steps') {
+      const [count, ...rest] = (directive[2] ?? '').trim().split(/\s+/);
+      const n = Math.max(1, Number(count) || 3);
+      const file = rest[0] || 'steps.txt';
+      if (toolMessages.length >= n) return say([`Done after ${toolMessages.length} steps.`]);
+      return toolCall(shellName(), { command: shellCommand(file, `step${toolMessages.length + 1}`), description: `Append one line to ${file}` });
     }
     if (last.role === 'tool') {
       const result = text(last).replace(/\s+/g, ' ').slice(0, 120);
