@@ -3533,5 +3533,12 @@
   "s9041": "How deeply a new chat thinks",
   "s9042": "How long a new chat's answer may be",
   "s9043": "The assistant has just finished",
-  "s9044": "Your message did not reach the answer. Send it again."
+  "s9044": "Your message did not reach the answer. Send it again.",
+  "s9045": "Queued — sends on the next step",
+  "s9046": "Add to this answer",
+  "s9047": "Model to load when Strata starts",
+  "s9048": "Strata loads this model when it opens, with the settings you saved for it. Loading a model by hand keeps working the same.",
+  "s9049": "Don't load",
+  "s9050": "{0}{1} tok/s",
+  "s9051": "{0}{1} tok/s · last reply"
 }

@@ -3533,5 +3533,12 @@
   "s9041": "Qué tan a fondo piensa un chat nuevo",
   "s9042": "Qué tan larga puede ser la respuesta de un chat nuevo",
   "s9043": "El asistente acaba de terminar",
-  "s9044": "Tu mensaje no llegó a la respuesta. Envíalo de nuevo."
+  "s9044": "Tu mensaje no llegó a la respuesta. Envíalo de nuevo.",
+  "s9045": "En cola — se envía en el siguiente paso",
+  "s9046": "Añadir a esta respuesta",
+  "s9047": "Modelo que se carga al iniciar Strata",
+  "s9048": "Strata carga este modelo al abrirse, con la configuración que guardaste para él. Cargar un modelo a mano sigue igual.",
+  "s9049": "No cargar",
+  "s9050": "{0}{1} tok/s",
+  "s9051": "{0}{1} tok/s · última respuesta"
 }

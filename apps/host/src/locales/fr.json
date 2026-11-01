@@ -3533,5 +3533,12 @@
   "s9041": "Profondeur de réflexion d’une nouvelle conversation",
   "s9042": "Longueur d’une réponse dans une nouvelle conversation",
   "s9043": "L’assistant vient de terminer",
-  "s9044": "Votre message n’est pas arrivé jusqu’à la réponse. Envoyez-le de nouveau."
+  "s9044": "Votre message n’est pas arrivé jusqu’à la réponse. Envoyez-le de nouveau.",
+  "s9045": "En attente — part à l’tape suivante",
+  "s9046": "Ajouter à cette réponse",
+  "s9047": "Modèle à charger au démarrage de Strata",
+  "s9048": "Strata charge ce modèle à l’ouverture, avec les réglages enregistrés pour lui. Charger un modèle à la main ne change pas.",
+  "s9049": "Ne pas charger",
+  "s9050": "{0}{1} tok/s",
+  "s9051": "{0}{1} tok/s · dernière réponse"
 }

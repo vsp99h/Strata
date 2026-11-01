@@ -3533,5 +3533,12 @@
   "s9041": "Wie gründlich ein neuer Chat denkt",
   "s9042": "Wie lang die Antwort eines neuen Chats sein darf",
   "s9043": "Der Assistent hat gerade aufgehört",
-  "s9044": "Ihre Nachricht hat die Antwort nicht erreicht. Senden Sie sie noch einmal."
+  "s9044": "Ihre Nachricht hat die Antwort nicht erreicht. Senden Sie sie noch einmal.",
+  "s9045": "In der Warteschlange — wird beim nächsten Schritt gesendet",
+  "s9046": "Zu dieser Antwort hinzufügen",
+  "s9047": "Beim Start von Strata zu ladendes Modell",
+  "s9048": "Strata lädt dieses Modell beim Start – mit den Einstellungen, die du dafür gespeichert hast. Manuelles Laden bleibt unverändert.",
+  "s9049": "Nicht laden",
+  "s9050": "{0}{1} tok/s",
+  "s9051": "{0}{1} tok/s · letzte Antwort"
 }

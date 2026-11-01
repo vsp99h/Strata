@@ -3533,5 +3533,12 @@
   "s9041": "Quão profundamente uma nova conversa pensa",
   "s9042": "O tamanho da resposta de uma nova conversa",
   "s9043": "O assistente acabou de terminar",
-  "s9044": "A sua mensagem não chegou à resposta. Envie-a novamente."
+  "s9044": "A sua mensagem não chegou à resposta. Envie-a novamente.",
+  "s9045": "Na fila — enviada na próxima etapa",
+  "s9046": "Adicionar a esta resposta",
+  "s9047": "Modelo a carregar quando o Strata inicia",
+  "s9048": "O Strata carrega este modelo ao abrir, com as configurações salvas para ele. Carregar um modelo manualmente continua igual.",
+  "s9049": "Não carregar",
+  "s9050": "{0}{1} tok/s",
+  "s9051": "{0}{1} tok/s · última resposta"
 }
