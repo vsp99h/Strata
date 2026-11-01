@@ -48,6 +48,21 @@ export function readQueue(raw: unknown): QueuedMessage[] {
 
 const plans = new Map<string, Plan>();
 const queues = new Map<string, QueuedMessage[]>();
+/**
+ * Comments the host has already taken out of the waiting list — delivered into the run, cancelled, or handed back
+ * when the turn ended. A queue snapshot that still names one is older than the news the page already has: the
+ * answer to the POST that queued it carries the list as it was *before* the Harness took it, and when that answer
+ * lands after the frame that retired the comment, the card comes back and stays for good. Filtering by what is
+ * settled makes the order of arrival irrelevant.
+ */
+const settled = new Map<string, Set<string>>();
+
+export function markQueueSettled(chatId: string, ids: readonly unknown[]) {
+  const done = settled.get(chatId) ?? new Set<string>();
+  let changed = false;
+  for (const id of ids) if (typeof id === 'string' && id && !done.has(id)) { done.add(id); changed = true; }
+  if (changed) settled.set(chatId, done);
+}
 const listeners = new Set<() => void>();
 const emit = () => listeners.forEach(fn => fn());
 const subscribe = (fn: () => void) => { listeners.add(fn); return () => { listeners.delete(fn); }; };
@@ -61,7 +76,10 @@ export function applyPlanFrame(chatId: string, raw: unknown) {
 }
 
 export function applyQueueFrame(chatId: string, raw: unknown) {
-  const items = readQueue(raw), before = queues.get(chatId) ?? [];
+  const done = settled.get(chatId);
+  const read = readQueue(raw);
+  const items = done && done.size ? read.filter(i => !done.has(i.id)) : read;
+  const before = queues.get(chatId) ?? [];
   if (JSON.stringify(before) === JSON.stringify(items)) return;
   if (items.length) queues.set(chatId, items); else queues.delete(chatId);
   emit();

@@ -9,7 +9,7 @@ import { approvalNeeded, workFinished } from './attention';
 import { applyGoalFrame } from './goal';
 import { tidyAnswer } from './answer-text';
 import { appendText, mergeDeliverable, readDeliverable, readGroup, readSkills, upsertGroup } from './deliverables';
-import { applyPlanFrame, applyQueueFrame, planApprove, queueMessage } from './plan';
+import { applyPlanFrame, applyQueueFrame, markQueueSettled, planApprove, queueMessage } from './plan';
 import { forkFields, isForkJob, TIME_SKIP_DURATION, timeSkipPrompt, timeSkipTabId, withTimeSkipResult, type TimeSkipFile, type TimeSkipJob, type TimeSkipRun, type TimeSkipVersion } from './time-skip';
 import { PREVIEW_EXAMPLES, type PreviewArtifact } from './artifacts';
 import { lifecyclePolicy } from './lifecycle';
@@ -1891,8 +1891,11 @@ export async function sendMessage(text: string, options: { fromLoop?: boolean; g
           const planned = frame.plan as { id?: unknown } | null;
           if (frame.event === 'proposed' && planned && typeof planned.id === 'string') { const pid = planned.id; patchAssistant(m => ({ ...m, planId: pid })); }
         } else if (type === 'queued-message') {
+          const sent = frame.message as { id?: unknown; text?: unknown } | undefined;
+          // Mark it before applying, so a snapshot that still lists this comment - the queue answer of the POST
+          // that queued it, arriving late - cannot put the card back under the composer.
+          if (frame.state === 'delivered' || frame.state === 'cancelled') markQueueSettled(sessionId, [sent?.id]);
           applyQueueFrame(sessionId, frame.queue);
-          const sent = frame.message as { text?: unknown } | undefined;
           if (frame.state === 'delivered' && sent && typeof sent.text === 'string') {
             // The host has just sent it into the run: it becomes an ordinary message here, and the answer to it starts a new reply.
             const before = assistantId; assistantId = uid('m');
@@ -1901,6 +1904,8 @@ export async function sendMessage(text: string, options: { fromLoop?: boolean; g
           }
         } else if (type === 'queued-release') {
           // The goal ended with messages left: they go out now, in order, as ordinary messages once this turn has finished.
+          const gone = Array.isArray(frame.messages) ? frame.messages.map(q => (q as { id?: unknown })?.id) : [];
+          markQueueSettled(sessionId, gone);   // handed back is settled too: no card may come back for them
           const left = Array.isArray(frame.messages) ? frame.messages.flatMap(q => (q && typeof (q as { text?: unknown }).text === 'string' ? [String((q as { text: string }).text)] : [])) : [];
           if (left.length) releasedMessages.set(sessionId, [...(releasedMessages.get(sessionId) ?? []), ...left]);
         } else if (type === 'plan-step') {
