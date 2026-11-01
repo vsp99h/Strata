@@ -95,3 +95,6 @@ node_modules/
 /build-spark/
 /build-vision-spark/
 /.venv-build/
+# Serena agent workspace: symbol cache, its own logs, local overrides and personal memories.
+.serena/
+
