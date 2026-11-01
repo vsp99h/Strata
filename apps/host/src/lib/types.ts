@@ -505,6 +505,7 @@ export interface SetupState {
   step: number;
   completedAt?: string;
   history: { step: number; at: string }[];
+  autoLoad?: string | null;
   app: { version: string; modelsDir: string; dataDir: string; modelsDirNotice?: string };
 }
 

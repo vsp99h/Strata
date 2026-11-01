@@ -277,7 +277,11 @@ function runtimeState(){
   return runtimeModels.state();
 }
 
-const startupModelId = process.env.STRATA_REAL_ENGINE === '1' ? (store.get().loaded ?? store.get().current) : null;
+/* What the person asked to open with (Settings → Model to load when Strata starts). `null` keeps the old behaviour
+   of restoring the last loaded model; 'none' never loads; a model id loads through Strata Control, the same call the
+   Models screen makes, so the settings saved for that model are the settings it starts with. */
+const autoLoad = store.get().autoLoad ?? null;
+const startupModelId = process.env.STRATA_REAL_ENGINE === '1' && autoLoad === null ? (store.get().loaded ?? store.get().current) : null;
 if (startupModelId) {
   monitor.setModel(startupModelId);
   const lastId = startupModelId;
@@ -301,6 +305,26 @@ if (startupModelId) {
       .catch((err) => console.error('autostart failed:', err.message));
   }, 700);
 }
+if (process.env.STRATA_REAL_ENGINE === '1' && autoLoad && autoLoad !== 'none') {
+  const wanted = autoLoad;
+  /* Strata answers only after its first read of the installation, which takes a second or two: wait for it rather
+     than try once and give up. The wait is bounded, so a broken installation cannot keep the host waiting forever. */
+  void (async () => {
+    const running = () => native.state().instances.some(i => ['ready', 'loading', 'starting', 'unloading'].includes(i.status));
+    const deadline = Date.now() + 60_000;
+    while (!native.state().available && !running() && Date.now() < deadline) {
+      // Without `force`: a read already running is awaited rather than started twice.
+      await native.refresh().catch(() => null);
+      if (native.state().available || running()) break;
+      await new Promise(resolve => setTimeout(resolve, 2000));
+    }
+    if (running()) return;   // a model is already coming up: nothing to start over it
+    if (!native.state().available) { console.log(`autostart    ·  skipped: ${native.state().error ?? 'Strata is not ready yet'}`); return; }
+    console.log(`autostart    ·  loading ${wanted} with the settings saved for it`);
+    try { await native.operation('load', { model: wanted }); }
+    catch (error) { console.error(`autostart    ·  ${error.message}`); }
+  })().catch(error => console.error(`autostart    ·  ${error?.message ?? error}`));   // a broken start must never take the host with it
+}
 const backend = await detectBackend({ force: true });
 
 console.log(`strata host  ·  http://${HOST}:${PORT}`);
@@ -323,6 +347,7 @@ function setupState() {
     flowVersion: 2,
     completedAt: s.setup.completedAt,
     history: s.setup.history ?? [],
+    autoLoad: s.autoLoad ?? null,
     app: { version: appVersion(), modelsDir: store.MODELS_DIR, dataDir: store.DATA_DIR, modelsDirNotice: store.MODELS_DIR_NOTICE },
   };
 }
@@ -1395,6 +1420,8 @@ async function api(req, res, path, method, url) {
     await pipeline(req, createWriteStream(target, { mode: 0o600 }));
     return json(res, 202, native.operation('install-engine-file', { path: target }));
   }
+  if (path === '/api/settings/autoload' && method === 'GET') return json(res, 200, { autoLoad: store.get().autoLoad ?? null });
+  if (path === '/api/settings/autoload' && method === 'POST') { const body = await readBody(req); const given = body?.model; const value = given === undefined || given === null || given === '' ? null : (given === 'none' ? 'none' : String(given).trim() || null); store.update({ autoLoad: value }); return json(res, 200, { autoLoad: store.get().autoLoad ?? null }); }
   if (path === '/api/updates/check' && method === 'GET' && control?.updateCheck) return json(res, 200, await checkComponentUpdates({ control, appUpdater, appVersion: process.env.STRATA_APP_VERSION || null }));
   if (path === '/api/updates/check' && method === 'GET') return json(res, 200, await checkUpdates({ appVersion:appVersionToShow(setupState().app.version,native.state().version), engineVersion:native.state().available?(native.state().installed?.engine?.version??null):(await engine.config()).engine.version }));
 

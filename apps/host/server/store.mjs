@@ -37,6 +37,9 @@ const DEFAULTS = {
   installed: {}, // id -> { installedAt, bytes }
   current: null,
   loaded: null,
+  // What to load when the host opens: null = as before (restore the last loaded model), 'none' = never load,
+  // anything else = that model id, loaded the way the Models screen loads it, with the settings saved for it.
+  autoLoad: null,
   beginner: {
     priority: 'balanced',
     contextLength: 'recommended',
