@@ -40,6 +40,11 @@ a{color:var(--st-accent-text);text-decoration:none} a:hover{text-decoration:unde
 .st-progress[data-tone="info"] .st-progress__bar{background:var(--st-info)}
 .st-progress[data-tone="warn"] .st-progress__bar{background:var(--st-warn)}
 .st-progress[data-tone="danger"] .st-progress__bar{background:var(--st-danger)}
+/* The Monitor's model progress, kept under the composer with the model's state in words. The state keeps a fixed
+   width so the bar does not shift sideways as the word changes length. */
+.composer-progress{display:flex;align-items:center;gap:8px;margin:6px 2px 0}
+.composer-progress__state{flex:none;min-width:6.5em}
+.composer-progress .st-progress{flex:1;min-width:0;border-width:0}
 /* gauge: see README for SVG markup (stroke-dasharray on a 270° arc) */
 .st-gauge{position:relative;width:120px;height:120px}
 .st-gauge__track{stroke:var(--st-surface-2)} .st-gauge__fill{stroke:var(--st-accent)}
