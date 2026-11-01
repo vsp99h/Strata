@@ -109,3 +109,33 @@ test('a comment the Harness will not take stays waiting and is handed back when 
   assert.ok(out.findIndex(f => f.type === 'queued-release') < out.findIndex(f => f.type === 'done'), 'it is handed back before the turn is over');
   assert.deepEqual(bridge.takeQueue('s3'), { queue: [], released: [] }, 'the waiting list is empty afterwards');
 });
+
+test('a comment the Harness takes after its turn has gone still leaves the waiting list, so no card stays on the page', { skip }, async (t) => {
+  const { bridge, ws, seen } = await rig(t, 's4');
+  const out = [];
+  const { run } = await startLongTurn(bridge, ws, 's4', out, 4);
+  const gw = bridge._debug().rt.gw;
+  const realRpc = gw.rpc.bind(gw);
+  let letHarnessAnswer = null;
+  const gate = new Promise(resolve => { letHarnessAnswer = resolve; });
+  gw.rpc = (method, args, opts) => (method === 'session/prompt' && args?.request?.mode === 'steer')
+    ? gate.then(() => realRpc(method, args, opts))
+    : realRpc(method, args, opts);
+  t.after(() => { gw.rpc = realRpc; });
+
+  const needle = `LATE-ACCEPT-MARKER-${Date.now()}`;
+  bridge.queueMessage({ chatId: 's4', text: needle });
+  assert.deepEqual(bridge.takeQueue('s4').queue.map(m => m.text), [needle], 'it waits while the Harness decides');
+
+  await bridge.stop('s4'); await run;   // the turn is over before the Harness has answered the steer
+  const snapshots = () => seen.filter(s => s.id === 's4').length;
+  const beforeLateAnswer = snapshots();
+
+  letHarnessAnswer();
+  for (let i = 0; i < 200 && snapshots() === beforeLateAnswer; i++) await wait(20);
+
+  assert.ok(!out.some(f => f.type === 'queued-message' && f.state === 'delivered'), 'a comment whose turn is gone is not announced as delivered into a turn that no longer exists');
+  assert.ok(snapshots() > beforeLateAnswer, 'the late acceptance still gives the page a snapshot, so its card cannot stay up');
+  assert.deepEqual(seen.filter(s => s.id === 's4').at(-1)?.queue ?? [], [], 'that snapshot says nothing is waiting');
+  assert.deepEqual(bridge.takeQueue('s4').queue, [], 'the waiting list is empty afterwards');
+});

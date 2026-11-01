@@ -145,7 +145,7 @@ export function queuedWhen(item: QueuedMessage, index: number, plan: Plan | null
   if (item.deliverAt === 'end') return { id: 'Queued — sends when the goal finishes' };
   if (index > 0) return { id: 'Queued — sends after that' };
   const step = currentStep(plan);
-  return step > 0 ? { id: 'Queued — sends when step {0} finishes', args: [step] } : { id: 'Queued — sends when the goal finishes' };
+  return step > 0 ? { id: 'Queued — sends when step {0} finishes', args: [step] } : { id: 'Queued — sends on the next step' };
 }
 
 export const stepsDone = (plan: Plan) => plan.steps.filter(s => s.state === 'done').length;

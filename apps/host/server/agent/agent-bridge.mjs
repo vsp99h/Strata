@@ -1134,13 +1134,16 @@ export function createAgentBridge({ dataDir, componentsDir = null, bundledDir = 
     try {
       await rt.gw.rpc('session/prompt', { request: { requestId: `steer-${randomUUID()}`, sessionId, mode: 'steer', content: [{ type: 'text', text: item.text }] } });
     } catch { return; }
-    // The turn may have ended while the Harness was deciding. Then it is not ours to announce anything: finishTurn
-    // has already handed whatever was still waiting back to the page, and saying 'delivered' now would repeat it.
-    const live = chats.get(chatId)?.turn;
-    if (!live || live !== turn || live.finished || live.stopping) return;
+    // The Harness has taken the text: from here it belongs to the run, whatever our turn object does next. Retire it
+    // from the waiting list at once, so a page that never gets the frame below still drops the card on its next
+    // snapshot, and so finishTurn cannot hand back as a new message one the model has already read.
     const waiting = (queues.get(chatId) ?? []).filter(m => m.id !== item.id);
     if (waiting.length) queues.set(chatId, waiting); else queues.delete(chatId);
     onQueue(chatId, queueView(chatId));
+    // The turn may have ended while the Harness was deciding. Then it is not ours to announce anything: the message is
+    // already out of the waiting list, and calling it 'delivered' on a different turn would draw it into the page twice.
+    const live = chats.get(chatId)?.turn;
+    if (!live || live !== turn || live.finished || live.stopping) return;
     live.announceQueue?.({ type: 'queued-message', state: 'delivered', message: { id: item.id, text: item.text, at: item.at, deliverAt: 'step' }, queue: queueView(chatId) });
   }
 
