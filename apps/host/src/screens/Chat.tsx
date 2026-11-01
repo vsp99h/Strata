@@ -8,6 +8,7 @@ import { TimeSkipWorking } from '../components/TimeSkipWorking';
 import { ChatToolbar } from '../components/ChatToolbar';
 import { ChatTelemetry } from '../components/TelemetryPopover';
 import { ModelProgressBar } from '../components/ModelProgressBar';
+import { DeferredQuestions } from '../components/DeferredQuestions';
 import { ArtifactCard } from '../components/ArtifactCard';
 import { ChatMedia } from '../components/ChatMedia';
 import { closePreviewTab } from '../lib/preview-tabs';
@@ -607,6 +608,7 @@ function Composer({ draft, setDraft, loaded, streaming, onSubmit, onKey, session
             <Btn variant="primary" size="sm" icon="send" disabled={streaming ? (!draft.trim() || draft.trim() === '/') : ((!draft.trim() && !photos.length) || draft.trim() === '/' || (!canChat && timeSkipPrompt(draft) === null))} onClick={onSubmit}>{tr(streaming ? 'Add to this answer' : 'Send')}</Btn>
           </div>
         </div>
+        <DeferredQuestions chatId={session?.id}/>
         <ModelProgressBar/>
         <ChatTelemetry session={session}/>
         </div>

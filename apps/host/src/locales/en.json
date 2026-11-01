@@ -3540,5 +3540,8 @@
   "s9048": "Strata loads this model when it opens, with the settings you saved for it. Loading a model by hand keeps working the same.",
   "s9049": "Don't load",
   "s9050": "{0}{1} tok/s",
-  "s9051": "{0}{1} tok/s · last reply"
+  "s9051": "{0}{1} tok/s · last reply",
+  "s9052": "Interrupted question",
+  "s9053": "Return to it",
+  "s9054": "Returning to the interrupted question"
 }

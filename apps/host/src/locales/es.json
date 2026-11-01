@@ -3540,5 +3540,8 @@
   "s9048": "Strata carga este modelo al abrirse, con la configuración que guardaste para él. Cargar un modelo a mano sigue igual.",
   "s9049": "No cargar",
   "s9050": "{0}{1} tok/s",
-  "s9051": "{0}{1} tok/s · última respuesta"
+  "s9051": "{0}{1} tok/s · última respuesta",
+  "s9052": "Pregunta interrumpida",
+  "s9053": "Volver a ella",
+  "s9054": "Volviendo a la pregunta interrumpida"
 }

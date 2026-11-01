@@ -45,6 +45,11 @@ a{color:var(--st-accent-text);text-decoration:none} a:hover{text-decoration:unde
 .composer-progress{display:flex;align-items:center;gap:8px;margin:6px 2px 0}
 .composer-progress__state{flex:none;min-width:6.5em}
 .composer-progress .st-progress{flex:1;min-width:0;border-width:0}
+/* A question left open when a comment joined the running turn: named, with one way back to it. */
+.deferred{display:flex;flex-direction:column;gap:2px;margin:6px 2px 0}
+.deferred__row{display:flex;align-items:center;gap:6px;min-width:0}
+.deferred__text{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.deferred__x{border:0;background:none;color:inherit;cursor:pointer;font-size:14px;line-height:1;padding:0 2px}
 /* gauge: see README for SVG markup (stroke-dasharray on a 270° arc) */
 .st-gauge{position:relative;width:120px;height:120px}
 .st-gauge__track{stroke:var(--st-surface-2)} .st-gauge__fill{stroke:var(--st-accent)}

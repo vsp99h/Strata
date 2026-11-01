@@ -3540,5 +3540,8 @@
   "s9048": "Strata lädt dieses Modell beim Start – mit den Einstellungen, die du dafür gespeichert hast. Manuelles Laden bleibt unverändert.",
   "s9049": "Nicht laden",
   "s9050": "{0}{1} tok/s",
-  "s9051": "{0}{1} tok/s · letzte Antwort"
+  "s9051": "{0}{1} tok/s · letzte Antwort",
+  "s9052": "Unterbrochene Frage",
+  "s9053": "Zurückkehren",
+  "s9054": "Zurück zur unterbrochenen Frage"
 }

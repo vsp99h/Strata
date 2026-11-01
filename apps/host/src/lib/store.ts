@@ -10,6 +10,7 @@ import { applyGoalFrame } from './goal';
 import { tidyAnswer } from './answer-text';
 import { appendText, mergeDeliverable, readDeliverable, readGroup, readSkills, upsertGroup } from './deliverables';
 import { applyPlanFrame, applyQueueFrame, markQueueSettled, planApprove, queueMessage } from './plan';
+import { noteDeferred } from './deferred';
 import { forkFields, isForkJob, TIME_SKIP_DURATION, timeSkipPrompt, timeSkipTabId, withTimeSkipResult, type TimeSkipFile, type TimeSkipJob, type TimeSkipRun, type TimeSkipVersion } from './time-skip';
 import { PREVIEW_EXAMPLES, type PreviewArtifact } from './artifacts';
 import { lifecyclePolicy } from './lifecycle';
@@ -1897,6 +1898,9 @@ export async function sendMessage(text: string, options: { fromLoop?: boolean; g
           if (frame.state === 'delivered' || frame.state === 'cancelled') markQueueSettled(sessionId, [sent?.id]);
           applyQueueFrame(sessionId, frame.queue);
           if (frame.state === 'delivered' && sent && typeof sent.text === 'string') {
+            // The turn had a question of its own before this comment joined it. Newest instruction wins in the
+            // loop, so the earlier one is remembered here rather than left silently behind.
+            noteDeferred(sessionId, [...(state.sessions.find(s => s.id === sessionId)?.messages ?? [])].reverse().find(m => m.role === 'user')?.content);
             // The host has just sent it into the run: it becomes an ordinary message here, and the answer to it starts a new reply.
             const before = assistantId; assistantId = uid('m');
             const next: ChatMessage = { id: assistantId, role: 'assistant', content: '', at: new Date().toISOString(), streaming: true };
