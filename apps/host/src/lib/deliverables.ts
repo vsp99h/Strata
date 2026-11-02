@@ -127,3 +127,13 @@ export const fileAction = {
 };
 
 export const rawUrlOf = (sessionId: string, path: string) => `/api/files/raw?sessionId=${encodeURIComponent(sessionId)}&path=${encodeURIComponent(path)}`;
+
+/**
+ * How many files an answer may list before the list folds into a single line.
+ *
+ * A dozen cards pushes the answer itself off the screen, and the person scrolls up to find what they
+ * came to read. A handful is harmless to leave open; past that the count is the useful part and the
+ * names belong one click away.
+ */
+export const DELIVERABLES_FOLD_AFTER = 5;
+export const foldsDeliverables = (count: number) => count > DELIVERABLES_FOLD_AFTER;

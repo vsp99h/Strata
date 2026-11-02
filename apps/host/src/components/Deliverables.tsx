@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react';
 import { tr } from '../lib/i18n';
-import { fileAction, fileSize, fileTypeLabel, previewOf, rawUrlOf, type ActivityGroup, type Deliverable } from '../lib/deliverables';
+import { fileAction, fileSize, fileTypeLabel, foldsDeliverables, previewOf, rawUrlOf, type ActivityGroup, type Deliverable } from '../lib/deliverables';
 import type { PreviewArtifact } from '../lib/artifacts';
 import { pushToast } from '../lib/store';
 import { plainFailureText } from '../lib/plain-errors';
@@ -39,6 +39,29 @@ export function FileCard({ file, sessionId, onPreview }: { file: Deliverable; se
       <button role="menuitem" className="menu__item" onClick={() => void run(async () => { await navigator.clipboard.writeText(await fileAction.fullPath(sessionId, file.path)); pushToast('info', tr('Path copied')); }, 'The path was not copied')}><Icon name="copy"/>{tr("Copy path")}</button>
       <button role="menuitem" className="menu__item" onClick={() => void run(async () => { await fileAction.attach(sessionId, file.path); pushToast('info', tr('Attached to your next message'), file.name); }, 'The file was not attached')}><Icon name="attach"/>{tr("Attach as context")}</button>
     </FloatingMenu> : null)}
+  </div>;
+}
+
+/**
+ * The files an answer left behind. A handful shows as cards, as before; past the fold the cards close
+ * behind one line saying how many there are, because a dozen of them pushes the answer itself off the
+ * screen and the person scrolls up to find what they came to read.
+ *
+ * The "Edited N files" summary stays open either way: it is three quiet rows with the line counts, which
+ * is the thing worth seeing without a click, not the detail.
+ */
+export function MessageDeliverables({ files, sessionId, onPreview }: { files: Deliverable[]; sessionId: string; onPreview: (a: PreviewArtifact) => void }) {
+  const [open, setOpen] = useState(false);
+  if (!files.length) return null;
+  const cards = files.map(f => <FileCard key={f.path} file={f} sessionId={sessionId} onPreview={onPreview}/>);
+  return <div className="deliverables" data-open={open || undefined}>
+    {foldsDeliverables(files.length) ? <>
+      <button type="button" className="act__line deliverables__fold" aria-expanded={open} onClick={() => setOpen(v => !v)}>
+        <Icon name="file" size={15}/><span>{tr('{0} files', [files.length])}</span><Icon name="chevron" size={14} className="act__chev"/>
+      </button>
+      {open ? cards : null}
+    </> : cards}
+    <EditedFiles files={files} sessionId={sessionId} onPreview={onPreview}/>
   </div>;
 }
 
