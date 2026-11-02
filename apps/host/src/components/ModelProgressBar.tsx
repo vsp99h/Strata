@@ -3,7 +3,7 @@ import { Bar } from './ui';
 import { useStore } from '../lib/store';
 import { useNative } from '../lib/native';
 import { nativeMonitorData } from '../lib/native-monitor';
-import { modelProgress } from '../lib/model-progress';
+import { modelProgress, modelProgressDetail } from '../lib/model-progress';
 import type { MonitorState } from '../lib/types';
 
 /** What the model is doing, in two words. Every one of these is already in the nine catalogs. */
@@ -29,11 +29,14 @@ export function ModelProgressBar() {
   const stored = useStore(s => s.monitor);
   const hardware = useStore(s => s.hardware);
   const native = useNative();
-  const progress = modelProgress(native ? nativeMonitorData(native, hardware) : stored);
+  const data = native ? nativeMonitorData(native, hardware) : stored;
+  const progress = modelProgress(data);
+  const detail = modelProgressDetail(data);
   const phase = progress?.phase ?? 'idle';
   const state = tr(PHASE_LABEL[phase]);
   return <div className="composer-progress">
     <span className="composer-progress__state xs muted">{state}</span>
     <Bar size="sm" label={tr("Model progress")} value={progress?.value ?? 0} indeterminate={progress?.indeterminate ?? false} tone={progress?.tone ?? 'accent'}/>
+    {detail ? <span className="composer-progress__detail xs muted">{detail}</span> : null}
   </div>;
 }

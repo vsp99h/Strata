@@ -45,6 +45,8 @@ a{color:var(--st-accent-text);text-decoration:none} a:hover{text-decoration:unde
 .composer-progress{display:flex;align-items:center;gap:8px;margin:6px 2px 0}
 .composer-progress__state{flex:none;min-width:6.5em}
 .composer-progress .st-progress{flex:1;min-width:0;border-width:0}
+/* The figures sit right of the bar, on its line. Tabular digits keep the line from twitching as they change. */
+.composer-progress__detail{flex:none;white-space:nowrap;font-variant-numeric:tabular-nums}
 /* A question left open when a comment joined the running turn: named, with one way back to it. */
 .deferred{display:flex;flex-direction:column;gap:2px;margin:6px 2px 0}
 .deferred__row{display:flex;align-items:center;gap:6px;min-width:0}

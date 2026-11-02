@@ -52,3 +52,47 @@ test('a figure the engine reported outside 0..100 is kept inside the bar', () =>
   assert.equal(modelProgress({ ...base, phase: 'reading', prompt: { done: 9, total: 8, pct: 140 } }).value, 100, 'never overflows');
   assert.equal(modelProgress({ ...base, phase: 'reading', prompt: { done: 0, total: 8, pct: -5 } }).value, 0, 'never negative');
 });
+
+/**
+ * The same progress in words, to the right of the bar. Spelled like the Monitor's status line, and the
+ * speed comes first because it is the figure that changes fastest and is the one asked about most.
+ */
+const { modelProgressDetail } = await moduleAt('../src/lib/model-progress.ts');
+
+test('reading: the speed, then how much of the prompt has gone in', () => {
+  assert.equal(
+    modelProgressDetail({ ...base, phase: 'reading', prompt: { done: 235000, total: 390000, pct: 60.3 }, promptTps: 128.4 }),
+    '128.4 tok/s · 235k / 390k (60%)');
+});
+
+test('writing with a known limit: the speed, then the share of the answer', () => {
+  assert.equal(
+    modelProgressDetail({ ...base, phase: 'generating', generation: { done: 1500, total: 6000 }, outputTps: 41.25 }),
+    '41.3 tok/s · 1.5k / 6.0k (25%)');
+});
+
+test('writing with no known limit: the count alone, never a made-up percentage', () => {
+  assert.equal(
+    modelProgressDetail({ ...base, phase: 'thinking', generation: { done: 512, total: null }, outputTps: 30 }),
+    '30.0 tok/s · 512 tokens');
+});
+
+test('a speed the engine does not report is left out, not shown as a dash', () => {
+  assert.equal(
+    modelProgressDetail({ ...base, phase: 'reading', prompt: { done: 235000, total: 390000, pct: 60 }, promptTps: null }),
+    '235k / 390k (60%)', 'no leading separator either');
+});
+
+test('nothing is claimed when there is nothing to claim', () => {
+  assert.equal(modelProgressDetail(null), null, 'no telemetry');
+  assert.equal(modelProgressDetail({ ...base, phase: 'idle' }), null, 'waiting says it on the left already');
+  assert.equal(modelProgressDetail({ ...base, phase: 'loading' }), null, 'a load has no figures yet');
+  assert.equal(modelProgressDetail({ ...base, phase: 'reading', prompt: { done: 0, total: 0, pct: 0 } }), null, 'a total of zero is not a 0% progress');
+  assert.equal(modelProgressDetail({ ...base, phase: 'generating', generation: { done: null, total: null } }), null, 'no count yet');
+});
+
+test('a percentage outside 0..100 is kept inside the words as well as the bar', () => {
+  assert.equal(
+    modelProgressDetail({ ...base, phase: 'reading', prompt: { done: 9, total: 8, pct: 140 }, promptTps: null }),
+    '9 / 8 (100%)');
+});
