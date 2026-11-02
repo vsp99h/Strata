@@ -14,6 +14,7 @@ test('every tr("...") literal and every command hint has a key in the English ca
   const known = new Set();
   for (const name of ['en', 'tune-en', 'tools-en', 'fix-en', 'gh-en']) for (const v of Object.values(await read(name))) known.add(String(v));
   const missing = [];
+  const placeholderGaps = [];
   const scan = async dir => {
     for (const entry of await readdir(dir, { withFileTypes: true })) {
       const path = join(dir, entry.name);
@@ -24,6 +25,16 @@ test('every tr("...") literal and every command hint has a key in the English ca
         if (ts.isCallExpression(node) && node.expression.getText(sf) === 'tr' && node.arguments[0] && (ts.isStringLiteral(node.arguments[0]) || ts.isNoSubstitutionTemplateLiteral(node.arguments[0]))) {
           const text = node.arguments[0].text.trim();
           if (text && /[a-zA-Z]{2}/.test(text) && !known.has(text)) missing.push(`${path}: ${text}`);
+        }
+        /**
+         * A string carrying a `{0}` slot AND words is translatable copy whatever it is passed to. Checking
+         * only `tr(...)` call sites misses strings handed to a helper that translates later - the telemetry
+         * chip asked for "{0}{1} tok/s", no such key existed, and the raw braces reached the screen.
+         * Templates that are only separators and slots (`{0} · {1}`) carry nothing to translate.
+         */
+        if ((ts.isStringLiteral(node) || ts.isNoSubstitutionTemplateLiteral(node)) && /\{\d+\}/.test(node.text) && /[a-zA-Z]{2}/.test(node.text) && !path.endsWith('chat-showcase.ts')) {
+          const text = node.text.trim();
+          if (text && !known.has(text)) placeholderGaps.push(`${path}: ${text}`);
         }
         if (ts.isPropertyAssignment(node) && node.name.getText(sf) === 'hint' && ts.isStringLiteral(node.initializer) && !path.endsWith('chat-showcase.ts')) {
           const text = node.initializer.text.trim();
@@ -36,6 +47,7 @@ test('every tr("...") literal and every command hint has a key in the English ca
   };
   await scan('src');
   assert.deepEqual(missing, []);
+  assert.deepEqual(placeholderGaps, [], 'a template with {0} slots that no catalog carries reaches the screen as raw braces');
 });
 
 test('the fix catalogs have the same keys and placeholders in all nine languages', async () => {
