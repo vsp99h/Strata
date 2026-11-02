@@ -10,11 +10,30 @@ const read = async name => JSON.parse(await readFile(`src/locales/${name}.json`,
 const built = await build({ stdin: { contents: "export * from './src/lib/i18n';", resolveDir: process.cwd() }, bundle: true, write: false, format: 'esm', platform: 'node', loader: { '.json': 'json' } });
 const { tr, setTranslationLanguage } = await import(`data:text/javascript;base64,${Buffer.from(built.outputFiles[0].text).toString('base64')}`);
 
-test('every tr("...") literal and every command hint has a key in the English catalog, so no language is stuck in English (#3479)', async () => {
+test('every string that reaches tr() and every command hint has a key in the English catalog, so no language is stuck in English (#3479)', async () => {
   const known = new Set();
   for (const name of ['en', 'tune-en', 'tools-en', 'fix-en', 'gh-en']) for (const v of Object.values(await read(name))) known.add(String(v));
   const missing = [];
   const placeholderGaps = [];
+  /**
+   * Two tr() calls carry no words to translate: an example address shown as a placeholder, and a model
+   * name that must stay exactly as the vendor writes it. Named here rather than filtered by shape, so a
+   * future third case has to be looked at instead of quietly matching a pattern.
+   */
+  const notCopy = new Set(['http://127.0.0.1:3000/mcp', 'Qwen-Image-2.1-Turbo']);
+  /**
+   * Every string a tr() call can receive. Reading only `arguments[0].text` saw 2001 of 3757 call sites
+   * and missed the other 1756 - `tr(ready ? 'Loading model' : 'Ready')`, `tr(label || 'Configured')` -
+   * which is how 18 strings came to sit untranslated in eight languages with a green suite.
+   */
+  const literalStrings = (node, out = []) => {
+    if (!node) return out;
+    if (ts.isStringLiteral(node) || ts.isNoSubstitutionTemplateLiteral(node)) { out.push(node.text); return out; }
+    if (ts.isParenthesizedExpression(node) || ts.isAsExpression(node)) return literalStrings(node.expression, out);
+    if (ts.isConditionalExpression(node)) { literalStrings(node.whenTrue, out); literalStrings(node.whenFalse, out); return out; }
+    if (ts.isBinaryExpression(node) && (node.operatorToken.kind === ts.SyntaxKind.BarBarToken || node.operatorToken.kind === ts.SyntaxKind.QuestionQuestionToken)) { literalStrings(node.left, out); literalStrings(node.right, out); return out; }
+    return out;
+  };
   const scan = async dir => {
     for (const entry of await readdir(dir, { withFileTypes: true })) {
       const path = join(dir, entry.name);
@@ -22,9 +41,11 @@ test('every tr("...") literal and every command hint has a key in the English ca
       if (!/\.tsx?$/.test(path)) continue;
       const source = await readFile(path, 'utf8'), sf = ts.createSourceFile(path, source, ts.ScriptTarget.Latest, true, path.endsWith('.tsx') ? ts.ScriptKind.TSX : ts.ScriptKind.TS);
       const visit = node => {
-        if (ts.isCallExpression(node) && node.expression.getText(sf) === 'tr' && node.arguments[0] && (ts.isStringLiteral(node.arguments[0]) || ts.isNoSubstitutionTemplateLiteral(node.arguments[0]))) {
-          const text = node.arguments[0].text.trim();
-          if (text && /[a-zA-Z]{2}/.test(text) && !known.has(text)) missing.push(`${path}: ${text}`);
+        if (ts.isCallExpression(node) && node.expression.getText(sf) === 'tr') {
+          for (const raw of literalStrings(node.arguments[0])) {
+            const text = String(raw).trim();
+            if (text && /[a-zA-Z]{2}/.test(text) && !known.has(text) && !notCopy.has(text)) missing.push(`${path}: ${text}`);
+          }
         }
         /**
          * A string carrying a `{0}` slot AND words is translatable copy whatever it is passed to. Checking
