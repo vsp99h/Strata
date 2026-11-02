@@ -8,6 +8,11 @@ export function chatMetrics(session:Session|null, monitor:MonitorState|null, con
   const working=replies.some(m=>m.streaming);
   // The Monitor's reading belongs to this chat when it names it, and also while this chat is the one working: a goal or an agent runs under its own
   // session ids, so matching on the chat id alone left the numbers frozen during a goal.
+  //
+  // With a model served by Strata Control the host's own monitor never leaves `idle` - Control reports the work through the instance's live metrics -
+  // so `active` is false there and every figure below comes from the messages instead. That is deliberate and it is what makes the chip correct in that
+  // mode: the host writes `contextUsed` and `tps` per request, so the numbers are current without the monitor. Anyone adding a new live figure here
+  // should take it from the messages or from the native projection, not from `monitor`, or it will read zero exactly when Control is doing the work.
   const active=!remote&&!!session&&!!monitor&&(monitor.context?.sessionId===session.id||(working&&['reading','thinking','generating'].includes(monitor.phase)));
   // One source: what the context held after the last reply (the engine's own count for that request); the monitor's live figure only while a reply streams.
   const finished=latest?(latest.contextUsed??latest.inputTokens!+(latest.tokens??0)):null;
