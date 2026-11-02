@@ -3562,5 +3562,6 @@
   "s9070": "Nur-CPU-Modell. Anfragen und Kontext beziehen sich auf dieses Modell; Systemmetriken sind gemeinsame Host-Messwerte.",
   "s9071": "Skill speichern",
   "s9072": "Erstelle eine mit der +-Schaltfläche.",
-  "s9073": "Konfiguration"
+  "s9073": "Konfiguration",
+  "s9074": "Die Antwort von vor dem Neuladen der Seite wird noch geschrieben. Stoppe sie oder warte, bis sie fertig ist."
 }

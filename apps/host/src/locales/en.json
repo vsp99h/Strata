@@ -3562,5 +3562,6 @@
   "s9070": "CPU-only model. Requests and context are scoped to this model; system metrics are shared host measurements.",
   "s9071": "Save skill",
   "s9072": "Create one with the + button.",
-  "s9073": "Configuration"
+  "s9073": "Configuration",
+  "s9074": "The answer from before the page was reloaded is still being written. Stop it, or wait for it to finish."
 }

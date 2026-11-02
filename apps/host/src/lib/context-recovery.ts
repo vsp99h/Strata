@@ -1,5 +1,5 @@
 import { tr } from './i18n';
-import { sendOversized, startNewChat, summarizeAndContinue } from './store';
+import { sendOversized, startNewChat, stopStreaming, summarizeAndContinue } from './store';
 
 /**
  * What the error card of a chat offers when the model's window is the problem. A conversation that no longer fits can be summarised and
@@ -26,6 +26,16 @@ export function contextRecovery(code: string | undefined): {
       action: 'Summarize and continue',
       onRetry: () => void summarizeAndContinue(),
       secondary: { label: 'Start a new chat', onClick: () => startNewChat() },
+    };
+  }
+  if (code === 'turn-active') {
+    // The page was reloaded while a turn was running. The browser forgot the stream; the host did not
+    // forget the turn, and it will not start a second one on the same chat. Sending again fails the same
+    // way forever, and the only way out used to be a new chat - so the card offers the thing that frees it.
+    return {
+      next: tr('The answer from before the page was reloaded is still being written. Stop it, or wait for it to finish.'),
+      action: 'Stop',
+      onRetry: () => stopStreaming(),
     };
   }
   return { next: tr('Try sending the message again.') };

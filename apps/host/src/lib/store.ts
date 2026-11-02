@@ -1472,14 +1472,17 @@ function markTurn(sessionId: string, turn: { abort: AbortController; agent: bool
  */
 export function stopStreaming() {
   const id = state.activeSession;
-  const turn = id ? liveTurns.get(id) : undefined;
-  if (!id || !turn) return;
-  const abort = () => { turn.abort.abort(); };
+  if (!id) return;
+  const turn = liveTurns.get(id);
+  // The abort only closes a stream this page opened. After a reload the page has no stream while the host
+  // still has the turn, and returning early there meant Stop did nothing at all - the chat could not be
+  // freed by anything but a new chat. The host is the one that knows whether there is a turn to stop.
+  const abort = () => { turn?.abort.abort(); };
   void api.post<{ stopped: boolean }>('/api/chat/stop', { sessionId: id }).then(
     result => {
       if (!result.stopped) abort();
       // An agent turn that was told to stop but is slow to end must not leave the chat stuck.
-      else setTimeout(() => { if (liveTurns.get(id) === turn) abort(); }, 30000);
+      else if (turn) setTimeout(() => { if (liveTurns.get(id) === turn) abort(); }, 30000);
     },
     abort,
   );
@@ -1677,11 +1680,12 @@ export function loopChatIds(): string[] { return loopScheduler.ids(); }
 
 /** Stop any chat's turn, not only the open one (the board's Stop). Same two-step as stopStreaming. */
 export function stopChat(id: string) {
+  // Same as stopStreaming: the host is asked whether this chat has a turn, not the page's own map, which
+  // is empty for a chat whose stream was lost to a reload.
   const turn = liveTurns.get(id);
-  if (!turn) return;
-  const abort = () => { turn.abort.abort(); };
+  const abort = () => { turn?.abort.abort(); };
   void api.post<{ stopped: boolean }>('/api/chat/stop', { sessionId: id }).then(
-    result => { if (!result.stopped) abort(); else setTimeout(() => { if (liveTurns.get(id) === turn) abort(); }, 30000); },
+    result => { if (!result.stopped) abort(); else if (turn) setTimeout(() => { if (liveTurns.get(id) === turn) abort(); }, 30000); },
     abort,
   );
 }

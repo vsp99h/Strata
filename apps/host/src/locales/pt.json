@@ -3562,5 +3562,6 @@
   "s9070": "Modelo somente CPU. As solicitações e o contexto são deste modelo; as métricas do sistema são medições compartilhadas do host.",
   "s9071": "Salvar habilidade",
   "s9072": "Crie uma com o botão +.",
-  "s9073": "Configuração"
+  "s9073": "Configuração",
+  "s9074": "A resposta de antes do recarregamento da página ainda está sendo escrita. Pare-a ou espere que termine."
 }

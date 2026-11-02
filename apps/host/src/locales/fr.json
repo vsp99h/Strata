@@ -3562,5 +3562,6 @@
   "s9070": "Modèle CPU uniquement. Les requêtes et le contexte portent sur ce modèle ; les métriques système sont des mesures partagées de l’hôte.",
   "s9071": "Enregistrer la compétence",
   "s9072": "Créez-en une avec le bouton +.",
-  "s9073": "Configuration"
+  "s9073": "Configuration",
+  "s9074": "La réponse d’avant le rechargement de la page est encore en cours d’écriture. Arrêtez-la ou attendez la fin."
 }

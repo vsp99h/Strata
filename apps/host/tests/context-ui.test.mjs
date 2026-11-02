@@ -25,7 +25,8 @@ globalThis.__calls = calls;
 const recovery = await load('context-recovery.ts', {
   store: `export const sendOversized = (mode) => globalThis.__calls.push(['oversized', mode]);
           export const summarizeAndContinue = () => globalThis.__calls.push(['summarize']);
-          export const startNewChat = () => globalThis.__calls.push(['new-chat']);`,
+          export const startNewChat = () => globalThis.__calls.push(['new-chat']);
+          export const stopStreaming = () => globalThis.__calls.push(['stop']);`,
 });
 const { chatMetrics } = await load('chat-metrics.ts');
 
@@ -47,6 +48,28 @@ test('a message that is too large offers the two ways that fit: a file the assis
   calls.length = 0;
   r.onRetry(); r.secondary.onClick();
   assert.deepEqual(calls, [['oversized', 'file'], ['oversized', 'preview']]);
+});
+
+test('a chat whose turn outlived a reload offers Stop, not a retry that would be refused again', () => {
+  const r = recovery.contextRecovery('turn-active');
+  assert.equal(r.action, 'Stop');
+  assert.match(r.next, /still being written/);
+  assert.doesNotMatch(r.next, /again/i, 'sending again is refused the same way, so the card must not advise it');
+  calls.length = 0;
+  r.onRetry();
+  assert.deepEqual(calls, [['stop']]);
+});
+
+test('Stop asks the host even when this page holds no stream - the reload case that used to be a dead end', () => {
+  const store = read('../src/lib/store.ts');
+  const streaming = store.slice(store.indexOf('export function stopStreaming()'), store.indexOf('/** Re-runs the last exchange'));
+  const chat = store.slice(store.indexOf('export function stopChat(id: string)'), store.indexOf('/** Stop a chat\'s loop'));
+  for (const [name, body] of [['stopStreaming', streaming], ['stopChat', chat]]) {
+    assert.ok(body.length > 50, `${name} was found in the store`);
+    assert.doesNotMatch(body, /if \(!turn\) return|if \(!id \|\| !turn\) return/, `${name} must not give up because the page has no stream`);
+    assert.match(body, /api\.post<\{ stopped: boolean \}>\('\/api\/chat\/stop'/, `${name} asks the host, which is what knows about the turn`);
+    assert.match(body, /turn\?\.abort/, `${name} aborts only a stream this page actually opened`);
+  }
 });
 
 test('any other error keeps the card as it was: one sentence, no buttons of ours', () => {
@@ -103,7 +126,8 @@ test('every sentence about the context is in the catalog in all nine languages, 
   const langs = ['en', 'zh', 'ja', 'de', 'es', 'ru', 'pt', 'ko', 'fr'];
   const catalogs = Object.fromEntries(langs.map(l => [l, JSON.parse(read(`../src/locales/${l}.json`))]));
   const idOf = text => Object.entries(catalogs.en).find(([, v]) => v === text)?.[0];
-  const sentences = [...Object.values(FIT_TEXT), 'Attach as a file', 'Send a shortened preview', 'Summarize and continue', 'Start a new chat',
+  const sentences = [...Object.values(FIT_TEXT), 'Attach as a file', 'Send a shortened preview', 'Summarize and continue', 'Start a new chat', 'Stop',
+    'The answer from before the page was reloaded is still being written. Stop it, or wait for it to finish.',
     'The message could not be prepared. Try a shorter message.', 'The last Strata session is still closing down.', 'Wait a moment and try again. If it keeps happening, restart the computer.'];
   const slots = t => (t.match(/\{\d+\}/g) ?? []).sort().join();
   for (const text of sentences) {
