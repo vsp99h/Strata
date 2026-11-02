@@ -40,13 +40,16 @@ a{color:var(--st-accent-text);text-decoration:none} a:hover{text-decoration:unde
 .st-progress[data-tone="info"] .st-progress__bar{background:var(--st-info)}
 .st-progress[data-tone="warn"] .st-progress__bar{background:var(--st-warn)}
 .st-progress[data-tone="danger"] .st-progress__bar{background:var(--st-danger)}
-/* The Monitor's model progress, kept under the composer with the model's state in words. The state keeps a fixed
-   width so the bar does not shift sideways as the word changes length. */
-.composer-progress{display:flex;align-items:center;gap:8px;margin:6px 2px 0}
-.composer-progress__state{flex:none;min-width:6.5em}
-.composer-progress .st-progress{flex:1;min-width:0;border-width:0}
-/* The figures sit right of the bar, on its line. Tabular digits keep the line from twitching as they change. */
-.composer-progress__detail{flex:none;white-space:nowrap;font-variant-numeric:tabular-nums}
+/* The Monitor's model progress, kept under the composer with the model's state in words.
+   Three columns, and the last one is reserved whether or not it holds anything: with the figures set to
+   size themselves, the bar changed width every time the text changed - "41.3 tok/s · 1.5k / 6.0k (25%)"
+   then "Waiting" - and jumped on every step of an answer. A fixed track keeps the bar still; the state
+   word keeps a fixed width for the same reason. */
+.composer-progress{--composer-detail-w:14em;display:grid;grid-template-columns:auto minmax(0,1fr) var(--composer-detail-w);align-items:center;gap:8px;margin:6px 2px 0}
+.composer-progress__state{min-width:6.5em}
+.composer-progress .st-progress{min-width:0;border-width:0}
+/* Tabular digits keep the figures from twitching inside their column; the column keeps them from moving the bar. */
+.composer-progress__detail{justify-self:end;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-variant-numeric:tabular-nums}
 /* A folded list of files an answer left behind: one quiet line, chevron turning the way the activity lines do. */
 .deliverables[data-open] .act__chev{transform:rotate(180deg)}
 .deliverables__fold{margin:2px 0 4px}
