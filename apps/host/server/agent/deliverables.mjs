@@ -153,11 +153,15 @@ const KIND_OF = name => {
   if (name === 'web_fetch' || name === 'web_search') return 'web';
   if (String(name).startsWith('mcp__browser__')) return 'browser';
   if (name === 'subagent') return 'helper';
+  // Loading a skill changes what the assistant knows for the rest of the turn, which is not the same thing
+  // as calling a tool. Folded into "used N tools" it was invisible, and a person could not tell from the
+  // page whether any skill was ever opened.
+  if (name === 'skill') return 'skill';
   return 'other';
 };
-const NOUN = { command: ['command', 'commands'], read: ['file', 'files'], edit: ['file', 'files'], search: ['search', 'searches'], web: ['web page', 'web pages'], browser: ['browser step', 'browser steps'], helper: ['helper', 'helpers'], other: ['tool', 'tools'] };
-const VERB = { command: ['Ran', 'ran'], read: ['Read', 'read'], edit: ['Edited', 'edited'], search: ['Searched', 'searched'], web: ['Looked up', 'looked up'], browser: ['Used the browser for', 'used the browser for'], helper: ['Started', 'started'], other: ['Used', 'used'] };
-const ORDER = ['command', 'read', 'edit', 'search', 'web', 'browser', 'helper', 'other'];
+const NOUN = { command: ['command', 'commands'], read: ['file', 'files'], edit: ['file', 'files'], search: ['search', 'searches'], web: ['web page', 'web pages'], browser: ['browser step', 'browser steps'], helper: ['helper', 'helpers'], skill: ['skill', 'skills'], other: ['tool', 'tools'] };
+const VERB = { command: ['Ran', 'ran'], read: ['Read', 'read'], edit: ['Edited', 'edited'], search: ['Searched', 'searched'], web: ['Looked up', 'looked up'], browser: ['Used the browser for', 'used the browser for'], helper: ['Started', 'started'], skill: ['Loaded', 'loaded'], other: ['Used', 'used'] };
+const ORDER = ['command', 'read', 'edit', 'search', 'web', 'browser', 'helper', 'skill', 'other'];
 const count = (n, [one, many]) => `${n === 1 ? 'a' : n} ${n === 1 ? one : many}`;
 
 /** "Ran 2 commands, read a file +225 -0" */

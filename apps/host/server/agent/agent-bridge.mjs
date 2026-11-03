@@ -871,7 +871,10 @@ export function createAgentBridge({ dataDir, componentsDir = null, bundledDir = 
         await runtime.gw.rpc('goals/pause', { agentId: sessionId, ref: { id: current.id, revision: current.revision } });
         if (chatId) onGoal(chatId, goalObject(await runtime.gw.rpc('goals/get', { agentId: sessionId }).catch(() => undefined)));
       }
-    } catch { /* no goal service, or nothing to pause */ }
+    } catch (e) { /* best effort: no goal service, or nothing to pause. Logged, because a goal that
+                      refuses to pause is otherwise invisible - the bar's button looks dead and the reason
+                      never reaches any log. */
+      log(`goal · pause on stop did not go through: ${e?.message ?? e}`); }
   }
 
   /** The goal as the page and the goal bar see it (notes-split-agent3.md), or null. */
@@ -901,7 +904,13 @@ export function createAgentBridge({ dataDir, componentsDir = null, bundledDir = 
     if (!current) throw new AgentUnavailable('There is no goal in this chat yet.', 'goal-none');
     const ref = { id: current.id, revision: current.revision };
     try {
-      if (action === 'pause') { if (current.phase === 'active') await rt.gw.rpc('goals/pause', { agentId: known, ref }); }
+      // Pausing a goal that is not running answered 200 having done nothing at all, which is
+      // indistinguishable from a dead button. Say so instead: a goal that already finished and a button
+      // that does not work are different news, and only one of them needs a fix.
+      if (action === 'pause') {
+        if (current.phase !== 'active') throw new AgentUnavailable('This goal is not working right now, so there is nothing to pause.', 'goal-phase');
+        await rt.gw.rpc('goals/pause', { agentId: known, ref });
+      }
       else if (action === 'clear') await rt.gw.rpc('goals/clear', { agentId: known, ref });
       else if (action === 'edit') {
         const objective = String(text ?? '').trim().slice(0, 4000);
