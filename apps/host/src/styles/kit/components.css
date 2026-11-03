@@ -50,9 +50,6 @@ a{color:var(--st-accent-text);text-decoration:none} a:hover{text-decoration:unde
 .composer-progress .st-progress{min-width:0;border-width:0}
 /* Tabular digits keep the figures from twitching inside their column; the column keeps them from moving the bar. */
 .composer-progress__detail{justify-self:end;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-variant-numeric:tabular-nums}
-/* A folded list of files an answer left behind: one quiet line, chevron turning the way the activity lines do. */
-.deliverables[data-open] .act__chev{transform:rotate(180deg)}
-.deliverables__fold{margin:2px 0 4px}
 /* A question left open when a comment joined the running turn: named, with one way back to it. */
 .deferred{display:flex;flex-direction:column;gap:2px;margin:6px 2px 0}
 .deferred__row{display:flex;align-items:center;gap:6px;min-width:0}
