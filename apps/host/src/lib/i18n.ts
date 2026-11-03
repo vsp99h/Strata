@@ -70,6 +70,23 @@ const patterns=Object.entries(english).filter(([,value])=>/\{\d+\}/.test(value))
 }).sort((a,b)=>b.specificity-a.specificity);
 const localizedTemplateSlots:Record<string,number[]>={s1242:[0],s2473:[1,2],s0825:[0,1],s2455:[0],s2456:[0],s7400:[1]};
 
+/**
+ * Plural forms inside one catalog value, separated by a pipe: "Ran {0} command|Ran {0} commands", and in
+ * Russian three: "...команду|...команды|...команд". The separator is safe to give this meaning because no
+ * value in any of the nine catalogs contained a pipe before it meant something.
+ *
+ * English has one and other; Russian has one, few and many, and it is the only one of the nine that needs
+ * three. The other seven count 1 and everything else, which is also what Japanese, Korean and Chinese
+ * want - there the forms are simply written the same twice.
+ */
+function pluralIndex(n:number,lang:Language){
+ if(lang!=='ru')return n===1?0:1;
+ const ones=n%10,hundreds=n%100;
+ if(ones===1&&hundreds!==11)return 0;
+ if(ones>=2&&ones<=4&&!(hundreds>=12&&hundreds<=14))return 1;
+ return 2;
+}
+
 /** Translate interface copy only. Non-string React children pass through unchanged. */
 export function tr<T>(value:T,values?:readonly unknown[]):T{
  if(typeof value!=='string')return value;
@@ -78,6 +95,12 @@ export function tr<T>(value:T,values?:readonly unknown[]):T{
  let id=ids.get(key),slots=values;
  if(!id&&language!=='en')for(const candidate of patterns){const match=candidate.pattern.exec(key);if(match){id=candidate.id;const found:unknown[]=[];candidate.slots.forEach((slot,index)=>{const captured=match[index+1];found[slot]=localizedTemplateSlots[candidate.id]?.includes(slot)?tr(captured):captured;});slots=found;break;}}
  let text=decode(id?(dictionary[id]??english[id as keyof typeof english]):key);
+ // Choose the plural form before the number is filled in, so every form carries its own {0}.
+ if(text.includes('|')){
+  const forms=text.split('|');
+  const counted=(slots??[]).find(v=>typeof v==='number') as number|undefined;
+  text=forms[counted===undefined?0:Math.min(pluralIndex(counted,language),forms.length-1)]??forms[0];
+ }
  if(slots)text=text.replace(/\{(\d+)\}/g,(_,index)=>String(slots![Number(index)]??''));
  if(!id&&!values)return decode(value) as T;
  return (leading+text+trailing) as T;

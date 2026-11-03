@@ -3563,5 +3563,14 @@
   "s9071": "Salvar habilidade",
   "s9072": "Crie uma com o botão +.",
   "s9073": "Configuração",
-  "s9074": "A resposta de antes do recarregamento da página ainda está sendo escrita. Pare-a ou espere que termine."
+  "s9074": "A resposta de antes do recarregamento da página ainda está sendo escrita. Pare-a ou espere que termine.",
+  "s9076": "Executei {0} comando|Executei {0} comandos",
+  "s9077": "Li {0} arquivo|Li {0} arquivos",
+  "s9078": "Editei {0} arquivo|Editei {0} arquivos",
+  "s9079": "Pesquisei {0} vez|Pesquisei {0} vezes",
+  "s9080": "Consultei {0} página web|Consultei {0} páginas web",
+  "s9081": "Usei o navegador {0} vez|Usei o navegador {0} vezes",
+  "s9082": "Iniciei {0} auxiliar|Iniciei {0} auxiliares",
+  "s9083": "Carreguei {0} habilidade|Carreguei {0} habilidades",
+  "s9084": "Usei {0} ferramenta|Usei {0} ferramentas"
 }

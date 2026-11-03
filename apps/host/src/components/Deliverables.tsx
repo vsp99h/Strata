@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react';
 import { tr } from '../lib/i18n';
-import { fileAction, fileSize, fileTypeLabel, foldsDeliverables, previewOf, rawUrlOf, type ActivityGroup, type Deliverable } from '../lib/deliverables';
+import { activitySentence, fileAction, fileSize, fileTypeLabel, foldsDeliverables, previewOf, rawUrlOf, type ActivityGroup, type Deliverable } from '../lib/deliverables';
 import type { PreviewArtifact } from '../lib/artifacts';
 import { pushToast } from '../lib/store';
 import { plainFailureText } from '../lib/plain-errors';
@@ -101,7 +101,7 @@ export function ActivityLine({ group, sessionId, onPreview }: { group: ActivityG
   const [open, setOpen] = useState(false);
   const picture = group.files.find(f => f.kind === 'image');
   // The host's sentence may end with the numbers ("… +225 −0"): they are drawn as figures instead.
-  const sentence = group.line.replace(/\s*\+\d+\s*[−-]\s*\d+\s*$/, '');
+  const sentence = activitySentence(group.counts, group.line).replace(/\s*\+\d+\s*[−-]\s*\d+\s*$/, '');
   return <div className="act" data-open={open || undefined}>
     <button type="button" className="act__line" aria-expanded={open} disabled={!group.files.length} onClick={() => setOpen(v => !v)}>
       <span>{sentence}</span>{group.added || group.removed ? <Plusminus added={group.added} removed={group.removed}/> : null}

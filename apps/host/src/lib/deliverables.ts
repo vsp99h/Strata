@@ -1,4 +1,5 @@
 import { api } from './client';
+import { tr } from './i18n';
 import type { PreviewArtifact } from './artifacts';
 import { tidyAnswer } from './answer-text';
 
@@ -11,7 +12,11 @@ export type DeliverableKind = 'html' | 'markdown' | 'pdf' | 'csv' | 'image' | 'c
 export interface Deliverable { path: string; abs: string; name: string; kind: DeliverableKind; status: 'created' | 'changed'; size: number; lines: number | null; added: number; removed: number;
   /** Which write came last in this reply (set when the host's frames are merged): the newest is the run's main result. */ order?: number }
 export interface GroupFile { path: string; name: string; kind: DeliverableKind; status: string; added: number; removed: number }
-export interface ActivityGroup { id: string; closed: boolean; line: string; added: number; removed: number; files: GroupFile[] }
+/**
+ * `line` is the host's own English sentence, kept as the fallback for a frame that carries no counts.
+ * `counts` is what the page builds the sentence from, so the words can be in the person's language.
+ */
+export interface ActivityGroup { id: string; closed: boolean; line: string; counts: Record<string, number>; added: number; removed: number; files: GroupFile[] }
 export type MessageBlock = { kind: 'text'; text: string } | ({ kind: 'group' } & ActivityGroup);
 
 const KINDS = ['html', 'markdown', 'pdf', 'csv', 'image', 'code', 'text', 'other'];
@@ -36,7 +41,44 @@ export function readGroup(raw: unknown): ActivityGroup | null {
     const d = readDeliverable(x);
     return d ? [{ path: d.path, name: d.name, kind: d.kind, status: d.status, added: d.added, removed: d.removed }] : [];
   }) : [];
-  return { id: g.id, closed: g.closed === true, line: typeof g.line === 'string' ? g.line : '', added: num(g.added), removed: num(g.removed), files };
+  return { id: g.id, closed: g.closed === true, line: typeof g.line === 'string' ? g.line : '', counts: readCounts(g.counts), added: num(g.added), removed: num(g.removed), files };
+}
+
+const readCounts = (raw: unknown): Record<string, number> => {
+  if (!raw || typeof raw !== 'object') return {};
+  const out: Record<string, number> = {};
+  for (const [kind, value] of Object.entries(raw as Record<string, unknown>)) { const n = Number(value); if (Number.isFinite(n) && n > 0) out[kind] = n; }
+  return out;
+};
+
+/**
+ * The activity line, in the person's language.
+ *
+ * The host used to send only a finished English sentence, and the page printed it as it came: every
+ * "Ran 2 commands, read a file" stayed English whatever the interface language was. The frame already
+ * carried the counts all along - the page threw them away - so the sentence is built here from the
+ * catalog instead, and the host's English remains the fallback for a frame that has no counts.
+ *
+ * Order is the host's, so a line does not reorder itself between two replies that did the same things.
+ */
+const SENTENCE: [string, string][] = [
+  ['command', 'Ran {0} command|Ran {0} commands'],
+  ['read', 'Read {0} file|Read {0} files'],
+  ['edit', 'Edited {0} file|Edited {0} files'],
+  ['search', 'Searched {0} time|Searched {0} times'],
+  ['web', 'Looked up {0} web page|Looked up {0} web pages'],
+  ['browser', 'Used the browser {0} time|Used the browser {0} times'],
+  ['helper', 'Started {0} helper|Started {0} helpers'],
+  ['skill', 'Loaded {0} skill|Loaded {0} skills'],
+  ['other', 'Used {0} tool|Used {0} tools'],
+];
+export function activitySentence(counts: Record<string, number> | undefined, fallback = ''): string {
+  if (!counts) return fallback;
+  const parts = SENTENCE.filter(([kind]) => counts[kind] > 0).map(([kind, template]) => tr(template, [counts[kind]]));
+  // Each catalog string starts capitalised because it can stand alone; mid-sentence it must not.
+  // Harmless where there is no case (Japanese, Korean, Chinese) and where the form opens with the number.
+  const mid = (s: string) => s.replace(/^\p{L}/u, m => m.toLowerCase());
+  return parts.length ? parts.map((p, i) => (i === 0 ? p : mid(p))).join(', ') : fallback;
 }
 
 /** The `skills-used` frame: the skills this reply used, each with the name the person gave it and a one-line description. */

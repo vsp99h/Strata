@@ -14,8 +14,11 @@ test('every language covers every interface key and preserves interpolation slot
   for(const [id,source] of Object.entries(english)){
    const translated=catalogs[language][id];assert.equal(typeof translated,'string',`${language}:${id}`);
    assert(translated.trim()||language==='zh'&&['s2376','s2440'].includes(id),`${language}:${id} is empty`);
-   const expected=slots(source).filter(slot=>!(language!=='en'&&id==='s2463'&&slot==='{1}'));
-   assert.deepEqual(slots(translated),expected,`${language}:${id}`);
+   // A value may carry plural forms separated by a pipe ("Ran {0} command|Ran {0} commands", three of
+   // them in Russian). The invariant is about slots, not about how many forms a language needs: every
+   // form must carry the same slots as the English one, or the number disappears in that language.
+   const wanted=slots(source.split('|')[0]).filter(slot=>!(language!=='en'&&id==='s2463'&&slot==='{1}'));
+   for(const form of translated.split('|'))assert.deepEqual(slots(form),wanted,`${language}:${id}`);
   }
  }
 });

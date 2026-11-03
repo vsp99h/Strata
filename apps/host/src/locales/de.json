@@ -3563,5 +3563,14 @@
   "s9071": "Skill speichern",
   "s9072": "Erstelle eine mit der +-Schaltfläche.",
   "s9073": "Konfiguration",
-  "s9074": "Die Antwort von vor dem Neuladen der Seite wird noch geschrieben. Stoppe sie oder warte, bis sie fertig ist."
+  "s9074": "Die Antwort von vor dem Neuladen der Seite wird noch geschrieben. Stoppe sie oder warte, bis sie fertig ist.",
+  "s9076": "Befehl {0} ausgeführt|{0} Befehle ausgeführt",
+  "s9077": "{0} Datei gelesen|{0} Dateien gelesen",
+  "s9078": "{0} Datei bearbeitet|{0} Dateien bearbeitet",
+  "s9079": "{0} Mal gesucht|{0} Mal gesucht",
+  "s9080": "{0} Webseite nachgeschlagen|{0} Webseiten nachgeschlagen",
+  "s9081": "{0} Mal den Browser verwendet|{0} Mal den Browser verwendet",
+  "s9082": "{0} Helfer gestartet|{0} Helfer gestartet",
+  "s9083": "{0} Skill geladen|{0} Skills geladen",
+  "s9084": "{0} Werkzeug verwendet|{0} Werkzeuge verwendet"
 }

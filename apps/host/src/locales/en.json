@@ -3563,5 +3563,14 @@
   "s9071": "Save skill",
   "s9072": "Create one with the + button.",
   "s9073": "Configuration",
-  "s9074": "The answer from before the page was reloaded is still being written. Stop it, or wait for it to finish."
+  "s9074": "The answer from before the page was reloaded is still being written. Stop it, or wait for it to finish.",
+  "s9076": "Ran {0} command|Ran {0} commands",
+  "s9077": "Read {0} file|Read {0} files",
+  "s9078": "Edited {0} file|Edited {0} files",
+  "s9079": "Searched {0} time|Searched {0} times",
+  "s9080": "Looked up {0} web page|Looked up {0} web pages",
+  "s9081": "Used the browser {0} time|Used the browser {0} times",
+  "s9082": "Started {0} helper|Started {0} helpers",
+  "s9083": "Loaded {0} skill|Loaded {0} skills",
+  "s9084": "Used {0} tool|Used {0} tools"
 }
